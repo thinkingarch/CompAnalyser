@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PE Buy & Build Target Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .radar-chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .tooltip {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .criteria-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="gradient-bg text-white py-8 px-4 shadow-lg">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">PE Buy & Build Target Analyzer</h1>
+                    <p class="text-blue-100 max-w-2xl">Evaluate companies across key criteria to identify ideal acquisition targets for your private equity buy-and-build strategy</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <button id="sampleBtn" class="bg-white text-blue-800 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition">
+                        Load Sample Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Input Form -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Company Analysis</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                        <input type="text" id="companyName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                        <select id="industry" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="manufacturing">Manufacturing</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="technology">Technology</option>
+                            <option value="business_services">Business Services</option>
+                            <option value="consumer">Consumer</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Criteria Sliders -->
+                    <div class="space-y-6 mt-6">
+                        <h3 class="font-semibold text-gray-800">Evaluation Criteria</h3>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-sm font-medium text-gray-700">Market Position</label>
+                                <span id="marketPositionValue" class="text-sm text-gray-500">5</span>
+                            </div>
+                            <input type="range" id="marketPosition" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Weak</span>
+                                <span>Dominant</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-sm font-medium text-gray-700">Financial Performance</label>
+                                <span id="financialPerformanceValue" class="text-sm text-gray-500">5</span>
+                            </div>
+                            <input type="range" id="financialPerformance" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Poor</span>
+                                <span>Excellent</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-sm font-medium text-gray-700">Synergy Potential</label>
+                                <span id="synergyPotentialValue" class="text-sm text-gray-500">5</span>
+                            </div>
+                            <input type="range" id="synergyPotential" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Low</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-sm font-medium text-gray-700">Management Quality</label>
+                                <span id="managementQualityValue" class="text-sm text-gray-500">5</span>
+                            </div>
+                            <input type="range" id="managementQuality" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Weak</span>
+                                <span>Strong</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-sm font-medium text-gray-700">Growth Potential</label>
+                                <span id="growthPotentialValue" class="text-sm text-gray-500">5</span>
+                            </div>
+                            <input type="range" id="growthPotential" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>Limited</span>
+                                <span>Significant</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="analyzeBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition mt-6">
+                        Analyze Company
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Radar Chart -->
+            <div class="bg-white rounded-xl shadow-md p-6 card-hover lg:col-span-2">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">Target Evaluation</h2>
+                    <div class="flex space-x-2">
+                        <button id="exportBtn" class="bg-gray-100 text-gray-700 py-1 px-3 rounded-lg text-sm hover:bg-gray-200 transition">
+                            <i class="fas fa-download mr-1"></i> Export
+                        </button>
+                        <button id="compareBtn" class="bg-gray-100 text-gray-700 py-1 px-3 rounded-lg text-sm hover:bg-gray-200 transition">
+                            <i class="fas fa-exchange-alt mr-1"></i> Compare
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="radar-chart-container">
+                    <canvas id="radarChart"></canvas>
+                    <div id="chartTooltip" class="tooltip"></div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="font-semibold text-gray-800 mb-3">Evaluation Legend</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center">
+                            <span class="criteria-dot bg-green-500"></span>
+                            <span class="text-sm">Market Position: Competitive advantage, market share</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="criteria-dot bg-blue-500"></span>
+                            <span class="text-sm">Financial Performance: Revenue growth, margins</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="criteria-dot bg-purple-500"></span>
+                            <span class="text-sm">Synergy Potential: Cost savings, revenue synergies</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="criteria-dot bg-yellow-500"></span>
+                            <span class="text-sm">Management Quality: Leadership, execution capability</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="criteria-dot bg-red-500"></span>
+                            <span class="text-sm">Growth Potential: Market expansion, product pipeline</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="resultsSection" class="bg-white rounded-xl shadow-md p-6 mt-8 card-hover hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Analysis Results</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="text-blue-800 font-bold text-3xl mb-1" id="overallScore">0</div>
+                    <div class="text-blue-600 text-sm font-medium">Overall Score</div>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="text-green-800 font-bold text-xl mb-1" id="targetRating">-</div>
+                    <div class="text-green-600 text-sm font-medium">Target Rating</div>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <div class="text-purple-800 font-bold text-xl mb-1" id="industryBenchmark">-</div>
+                    <div class="text-purple-600 text-sm font-medium">vs. Industry</div>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <div class="text-yellow-800 font-bold text-xl mb-1" id="dealRecommendation">-</div>
+                    <div class="text-yellow-600 text-sm font-medium">Recommendation</div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+                <h3 class="font-semibold text-gray-800 mb-3">Detailed Assessment</h3>
+                <div id="detailedAssessment" class="text-gray-700">
+                    <!-- Will be filled by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Comparison Modal -->
+        <div id="comparisonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800">Compare Companies</h3>
+                        <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium text-gray-800 mb-3">Company 1</h4>
+                            <select id="compareCompany1" class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                <!-- Will be filled by JavaScript -->
+                            </select>
+                            <div class="radar-chart-container" style="height: 250px;">
+                                <canvas id="compareChart1"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium text-gray-800 mb-3">Company 2</h4>
+                            <select id="compareCompany2" class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4">
+                                <!-- Will be filled by JavaScript -->
+                            </select>
+                            <div class="radar-chart-container" style="height: 250px;">
+                                <canvas id="compareChart2"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <h4 class="font-medium text-gray-800 mb-3">Comparison Insights</h4>
+                        <div id="comparisonInsights" class="text-gray-700">
+                            <!-- Will be filled by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize variables
+        let radarChart;
+        let compareChart1, compareChart2;
+        let analyzedCompanies = [];
+        let currentCompany = null;
+        
+        // DOM Elements
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const sampleBtn = document.getElementById('sampleBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const compareBtn = document.getElementById('compareBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const comparisonModal = document.getElementById('comparisonModal');
+        const resultsSection = document.getElementById('resultsSection');
+        
+        // Slider value displays
+        const sliders = [
+            'marketPosition', 'financialPerformance', 'synergyPotential', 
+            'managementQuality', 'growthPotential'
+        ];
+        
+        // Initialize slider value displays
+        sliders.forEach(sliderId => {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(`${sliderId}Value`);
+            
+            slider.addEventListener('input', () => {
+                valueDisplay.textContent = slider.value;
+            });
+        });
+        
+        // Initialize radar chart
+        function initRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Market Position', 'Financial Performance', 'Synergy Potential', 'Management Quality', 'Growth Potential'],
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true,
+                                color: 'rgba(200, 200, 200, 0.3)'
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 10,
+                            ticks: {
+                                stepSize: 2,
+                                backdropColor: 'transparent'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            enabled: false,
+                            external: function(context) {
+                                const tooltip = document.getElementById('chartTooltip');
+                                
+                                if (context.tooltip.opacity === 0) {
+                                    tooltip.style.opacity = 0;
+                                    return;
+                                }
+                                
+                                const label = context.tooltip.dataPoints[0].label;
+                                const value = context.tooltip.dataPoints[0].raw;
+                                const datasetLabel = context.tooltip.dataPoints[0].dataset.label;
+                                
+                                tooltip.innerHTML = `
+                                    <div class="font-bold">${datasetLabel}</div>
+                                    <div>${label}: <span class="font-semibold">${value}/10</span></div>
+                                `;
+                                
+                                const chartRect = context.chart.canvas.getBoundingClientRect();
+                                tooltip.style.left = chartRect.left + context.tooltip.caretX + 'px';
+                                tooltip.style.top = chartRect.top + context.tooltip.caretY + 'px';
+                                tooltip.style.opacity = 1;
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            borderWidth: 2,
+                            tension: 0.1
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Analyze company
+        function analyzeCompany() {
+            const companyName = document.getElementById('companyName').value || 'Unnamed Company';
+            const industry = document.getElementById('industry').value;
+            
+            const scores = {
+                marketPosition: parseInt(document.getElementById('marketPosition').value),
+                financialPerformance: parseInt(document.getElementById('financialPerformance').value),
+                synergyPotential: parseInt(document.getElementById('synergyPotential').value),
+                managementQuality: parseInt(document.getElementById('managementQuality').value),
+                growthPotential: parseInt(document.getElementById('growthPotential').value)
+            };
+            
+            // Calculate overall score (weighted average)
+            const weights = {
+                marketPosition: 0.25,
+                financialPerformance: 0.2,
+                synergyPotential: 0.25,
+                managementQuality: 0.15,
+                growthPotential: 0.15
+            };
+            
+            let overallScore = 0;
+            for (const [key, value] of Object.entries(scores)) {
+                overallScore += value * weights[key];
+            }
+            overallScore = Math.round(overallScore * 10) / 10;
+            
+            // Determine target rating
+            let targetRating, ratingColor;
+            if (overallScore >= 8.5) {
+                targetRating = 'Great';
+                ratingColor = 'text-green-600';
+            } else if (overallScore >= 7) {
+                targetRating = 'Good';
+                ratingColor = 'text-blue-600';
+            } else if (overallScore >= 5) {
+                targetRating = 'Average';
+                ratingColor = 'text-yellow-600';
+            } else {
+                targetRating = 'Bad';
+                ratingColor = 'text-red-600';
+            }
+            
+            // Industry benchmark
+            const industryBenchmarks = {
+                manufacturing: 6.2,
+                healthcare: 7.1,
+                technology: 7.8,
+                business_services: 6.5,
+                consumer: 6.0
+            };
+            
+            const benchmark = industryBenchmarks[industry];
+            const vsBenchmark = overallScore - benchmark;
+            let industryComparison;
+            
+            if (vsBenchmark > 1.5) {
+                industryComparison = 'Significantly Above';
+            } else if (vsBenchmark > 0.5) {
+                industryComparison = 'Above';
+            } else if (vsBenchmark > -0.5) {
+                industryComparison = 'In Line';
+            } else if (vsBenchmark > -1.5) {
+                industryComparison = 'Below';
+            } else {
+                industryComparison = 'Significantly Below';
+            }
+            
+            // Deal recommendation
+            let recommendation;
+            if (overallScore >= 8.5) {
+                recommendation = 'Strong Buy';
+            } else if (overallScore >= 7) {
+                recommendation = 'Buy';
+            } else if (overallScore >= 5.5) {
+                recommendation = 'Hold';
+            } else if (overallScore >= 4) {
+                recommendation = 'Avoid';
+            } else {
+                recommendation = 'Strong Avoid';
+            }
+            
+            // Create company object
+            const company = {
+                name: companyName,
+                industry: industry,
+                scores: scores,
+                overallScore: overallScore,
+                targetRating: targetRating,
+                ratingColor: ratingColor,
+                industryComparison: industryComparison,
+                recommendation: recommendation,
+                date: new Date().toLocaleString()
+            };
+            
+            currentCompany = company;
+            analyzedCompanies.push(company);
+            
+            // Update radar chart
+            updateRadarChart(company);
+            
+            // Show results
+            showResults(company);
+            
+            // Update comparison dropdowns
+            updateComparisonDropdowns();
+        }
+        
+        // Update radar chart
+        function updateRadarChart(company) {
+            const dataValues = [
+                company.scores.marketPosition,
+                company.scores.financialPerformance,
+                company.scores.synergyPotential,
+                company.scores.managementQuality,
+                company.scores.growthPotential
+            ];
+            
+            // Generate a color based on the overall score
+            const hue = Math.floor((company.overallScore / 10) * 120); // 0-120 (red to green)
+            const color = `hsl(${hue}, 80%, 50%)`;
+            
+            radarChart.data.datasets = [{
+                label: company.name,
+                data: dataValues,
+                backgroundColor: `rgba(${hue}, 180, 50, 0.2)`,
+                borderColor: color,
+                pointBackgroundColor: color,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: color,
+                borderWidth: 2
+            }];
+            
+            radarChart.update();
+        }
+        
+        // Show results
+        function showResults(company) {
+            document.getElementById('overallScore').textContent = company.overallScore;
+            
+            const targetRatingEl = document.getElementById('targetRating');
+            targetRatingEl.textContent = company.targetRating;
+            targetRatingEl.className = `text-xl font-bold mb-1 ${company.ratingColor}`;
+            
+            document.getElementById('industryBenchmark').textContent = company.industryComparison;
+            document.getElementById('dealRecommendation').textContent = company.recommendation;
+            
+            // Detailed assessment
+            let assessmentHTML = `
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-800 mb-2">${company.name} - ${company.industry.replace('_', ' ').toUpperCase()}</h4>
+                    <p class="text-sm text-gray-600">Analyzed on ${company.date}</p>
+                </div>
+                
+                <div class="space-y-3">
+            `;
+            
+            // Add assessment for each criteria
+            const criteriaAssessments = {
+                marketPosition: [
+                    "1-3: Weak market position with minimal competitive advantage",
+                    "4-6: Moderate market share with some differentiation",
+                    "7-8: Strong position with clear competitive advantages",
+                    "9-10: Dominant market position with high barriers to entry"
+                ],
+                financialPerformance: [
+                    "1-3: Poor financials with declining revenues and weak margins",
+                    "4-6: Stable financials with modest growth and average margins",
+                    "7-8: Strong financial performance with consistent growth",
+                    "9-10: Exceptional financials with high growth and industry-leading margins"
+                ],
+                synergyPotential: [
+                    "1-3: Minimal synergy potential with limited cost or revenue opportunities",
+                    "4-6: Some synergy potential primarily from cost reductions",
+                    "7-8: Significant synergy potential from both cost and revenue opportunities",
+                    "9-10: Exceptional synergy potential with transformative combination benefits"
+                ],
+                managementQuality: [
+                    "1-3: Weak management with poor execution track record",
+                    "4-6: Adequate management but lacks strategic vision",
+                    "7-8: Strong management team with proven execution capability",
+                    "9-10: Exceptional leadership with deep industry expertise"
+                ],
+                growthPotential: [
+                    "1-3: Limited growth prospects in mature or declining market",
+                    "4-6: Moderate growth potential from market expansion",
+                    "7-8: Strong growth potential from multiple drivers",
+                    "9-10: Exceptional growth potential with significant upside"
+                ]
+            };
+            
+            for (const [criteria, score] of Object.entries(company.scores)) {
+                let assessment = '';
+                if (score <= 3) assessment = criteriaAssessments[criteria][0];
+                else if (score <= 6) assessment = criteriaAssessments[criteria][1];
+                else if (score <= 8) assessment = criteriaAssessments[criteria][2];
+                else assessment = criteriaAssessments[criteria][3];
+                
+                assessmentHTML += `
+                    <div class="border-l-4 border-blue-200 pl-3 py-1">
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-800">${criteria.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</span>
+                            <span class="font-semibold ${score <= 3 ? 'text-red-600' : score <= 6 ? 'text-yellow-600' : score <= 8 ? 'text-blue-600' : 'text-green-600'}">${score}/10</span>
+                        </div>
+                        <p class="text-sm text-gray-600">${assessment}</p>
+                    </div>
+                `;
+            }
+            
+            assessmentHTML += `
+                </div>
+                
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-gray-800 mb-2">Final Recommendation</h4>
+                    <p class="${company.overallScore >= 8.5 ? 'text-green-600' : company.overallScore >= 7 ? 'text-blue-600' : company.overallScore >= 5 ? 'text-yellow-600' : 'text-red-600'} font-medium">
+                        ${company.recommendation.toUpperCase()}
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        ${getRecommendationDetails(company.overallScore)}
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('detailedAssessment').innerHTML = assessmentHTML;
+            resultsSection.classList.remove('hidden');
+        }
+        
+        // Get recommendation details
+        function getRecommendationDetails(score) {
+            if (score >= 8.5) {
+                return "This company represents an exceptional buy-and-build target with strong scores across all criteria. It offers dominant market position, excellent financials, significant synergies, strong management, and high growth potential. Immediate acquisition recommended at reasonable valuation multiples.";
+            } else if (score >= 7) {
+                return "This is a good buy-and-build target with above-average scores across most criteria. While not exceptional, it offers solid fundamentals and synergy potential that could create value in a platform acquisition. Due diligence should focus on confirming growth assumptions.";
+            } else if (score >= 5) {
+                return "An average target that may be suitable as an add-on acquisition at the right price, but lacks the characteristics of a strong platform company. Potential exists but would require significant operational improvements to create value. Consider only if priced attractively with clear turnaround plan.";
+            } else {
+                return "This company scores poorly across most evaluation criteria and is not recommended as a buy-and-build target. Significant challenges exist in market position, financial performance, or management quality that would make value creation difficult. Recommend exploring alternative targets.";
+            }
+        }
+        
+        // Update comparison dropdowns
+        function updateComparisonDropdowns() {
+            const dropdown1 = document.getElementById('compareCompany1');
+            const dropdown2 = document.getElementById('compareCompany2');
+            
+            // Clear existing options
+            dropdown1.innerHTML = '';
+            dropdown2.innerHTML = '';
+            
+            // Add new options
+            analyzedCompanies.forEach((company, index) => {
+                const option1 = document.createElement('option');
+                option1.value = index;
+                option1.textContent = `${company.name} (${company.overallScore})`;
+                if (index === analyzedCompanies.length - 1) option1.selected = true;
+                dropdown1.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = index;
+                option2.textContent = `${company.name} (${company.overallScore})`;
+                if (index === analyzedCompanies.length - 2) option2.selected = true;
+                dropdown2.appendChild(option2);
+            });
+            
+            // Update comparison charts if modal is open
+            if (!comparisonModal.classList.contains('hidden')) {
+                updateComparisonCharts();
+            }
+        }
+        
+        // Update comparison charts
+        function updateComparisonCharts() {
+            const index1 = document.getElementById('compareCompany1').value;
+            const index2 = document.getElementById('compareCompany2').value;
+            
+            if (index1 && index2 && analyzedCompanies.length >= 2) {
+                const company1 = analyzedCompanies[index1];
+                const company2 = analyzedCompanies[index2];
+                
+                // Data for charts
+                const dataValues1 = [
+                    company1.scores.marketPosition,
+                    company1.scores.financialPerformance,
+                    company1.scores.synergyPotential,
+                    company1.scores.managementQuality,
+                    company1.scores.growthPotential
+                ];
+                
+                const dataValues2 = [
+                    company2.scores.marketPosition,
+                    company2.scores.financialPerformance,
+                    company2.scores.synergyPotential,
+                    company2.scores.managementQuality,
+                    company2.scores.growthPotential
+                ];
+                
+                // Generate colors
+                const hue1 = Math.floor((company1.overallScore / 10) * 120);
+                const hue2 = Math.floor((company2.overallScore / 10) * 120);
+                
+                const color1 = `hsl(${hue1}, 80%, 50%)`;
+                const color2 = `hsl(${hue2}, 80%, 50%)`;
+                
+                // Update or create chart 1
+                const ctx1 = document.getElementById('compareChart1').getContext('2d');
+                if (compareChart1) {
+                    compareChart1.destroy();
+                }
+                
+                compareChart1 = new Chart(ctx1, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Market Position', 'Financial Performance', 'Synergy Potential', 'Management Quality', 'Growth Potential'],
+                        datasets: [{
+                            label: company1.name,
+                            data: dataValues1,
+                            backgroundColor: `rgba(${hue1}, 180, 50, 0.2)`,
+                            borderColor: color1,
+                            pointBackgroundColor: color1,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                                suggestedMax: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Update or create chart 2
+                const ctx2 = document.getElementById('compareChart2').getContext('2d');
+                if (compareChart2) {
+                    compareChart2.destroy();
+                }
+                
+                compareChart2 = new Chart(ctx2, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Market Position', 'Financial Performance', 'Synergy Potential', 'Management Quality', 'Growth Potential'],
+                        datasets: [{
+                            label: company2.name,
+                            data: dataValues2,
+                            backgroundColor: `rgba(${hue2}, 180, 50, 0.2)`,
+                            borderColor: color2,
+                            pointBackgroundColor: color2,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                suggestedMin: 0,
+                                suggestedMax: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+                
+                // Generate comparison insights
+                generateComparisonInsights(company1, company2);
+            }
+        }
+        
+        // Generate comparison insights
+        function generateComparisonInsights(company1, company2) {
+            const insightsEl = document.getElementById('comparisonInsights');
+            let insightsHTML = '';
+            
+            // Overall comparison
+            const scoreDiff = company1.overallScore - company2.overallScore;
+            let overallComparison;
+            
+            if (Math.abs(scoreDiff) < 0.5) {
+                overallComparison = `Both companies have similar overall scores, making them relatively comparable as buy-and-build targets.`;
+            } else if (scoreDiff > 0) {
+                overallComparison = `${company1.name} scores ${scoreDiff.toFixed(1)} points higher overall than ${company2.name}, making it the stronger buy-and-build target.`;
+            } else {
+                overallComparison = `${company2.name} scores ${Math.abs(scoreDiff).toFixed(1)} points higher overall than ${company1.name}, making it the stronger buy-and-build target.`;
+            }
+            
+            insightsHTML += `<p class="mb-3">${overallComparison}</p>`;
+            
+            // Criteria comparisons
+            insightsHTML += `<h5 class="font-medium text-gray-800 mb-2">Key Differences:</h5><ul class="list-disc pl-5 space-y-1">`;
+            
+            const criteriaNames = {
+                marketPosition: 'Market Position',
+                financialPerformance: 'Financial Performance',
+                synergyPotential: 'Synergy Potential',
+                managementQuality: 'Management Quality',
+                growthPotential: 'Growth Potential'
+            };
+            
+            for (const [criteria, name] of Object.entries(criteriaNames)) {
+                const diff = company1.scores[criteria] - company2.scores[criteria];
+                if (Math.abs(diff) >= 2) { // Only highlight significant differences
+                    if (diff > 0) {
+                        insightsHTML += `<li>${company1.name} has significantly stronger ${name.toLowerCase()} (${company1.scores[criteria]} vs ${company2.scores[criteria]})</li>`;
+                    } else {
+                        insightsHTML += `<li>${company2.name} has significantly stronger ${name.toLowerCase()} (${company2.scores[criteria]} vs ${company1.scores[criteria]})</li>`;
+                    }
+                }
+            }
+            
+            insightsHTML += `</ul>`;
+            
+            // Recommendation
+            insightsHTML += `<div class="mt-4 p-3 bg-blue-50 rounded-lg">`;
+            
+            if (company1.overallScore > company2.overallScore + 1) {
+                insightsHTML += `<p class="font-medium">Recommendation: <span class="text-blue-700">${company1.name} is the preferred target</span> due to its higher overall score and stronger performance in key criteria.</p>`;
+            } else if (company2.overallScore > company1.overallScore + 1) {
+                insightsHTML += `<p class="font-medium">Recommendation: <span class="text-blue-700">${company2.name} is the preferred target</span> due to its higher overall score and stronger performance in key criteria.</p>`;
+            } else {
+                insightsHTML += `<p class="font-medium">Recommendation: <span class="text-blue-700">Both companies are similarly attractive</span> as buy-and-build targets. The decision should be based on strategic fit and valuation.</p>`;
+            }
+            
+            insightsHTML += `</div>`;
+            
+            insightsEl.innerHTML = insightsHTML;
+        }
+        
+        // Load sample data
+        function loadSampleData() {
+            document.getElementById('companyName').value = 'Precision Manufacturing Inc.';
+            document.getElementById('industry').value = 'manufacturing';
+            document.getElementById('marketPosition').value = 8;
+            document.getElementById('marketPositionValue').textContent = 8;
+            document.getElementById('financialPerformance').value = 7;
+            document.getElementById('financialPerformanceValue').textContent = 7;
+            document.getElementById('synergyPotential').value = 9;
+            document.getElementById('synergyPotentialValue').textContent = 9;
+            document.getElementById('managementQuality').value = 6;
+            document.getElementById('managementQualityValue').textContent = 6;
+            document.getElementById('growthPotential').value = 7;
+            document.getElementById('growthPotentialValue').textContent = 7;
+            
+            analyzeCompany();
+        }
+        
+        // Export data
+        function exportData() {
+            if (!currentCompany) return;
+            
+            const data = {
+                company: currentCompany.name,
+                industry: currentCompany.industry,
+                scores: currentCompany.scores,
+                overallScore: currentCompany.overallScore,
+                rating: currentCompany.targetRating,
+                recommendation: currentCompany.recommendation
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `${currentCompany.name.replace(/ /g, '_')}_analysis.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // Event listeners
+        analyzeBtn.addEventListener('click', analyzeCompany);
+        sampleBtn.addEventListener('click', loadSampleData);
+        exportBtn.addEventListener('click', exportData);
+        
+        compareBtn.addEventListener('click', () => {
+            if (analyzedCompanies.length < 2) {
+                alert('You need to analyze at least 2 companies to compare');
+                return;
+            }
+            comparisonModal.classList.remove('hidden');
+            updateComparisonDropdowns();
+            updateComparisonCharts();
+        });
+        
+        closeModalBtn.addEventListener('click', () => {
+            comparisonModal.classList.add('hidden');
+        });
+        
+        document.getElementById('compareCompany1').addEventListener('change', updateComparisonCharts);
+        document.getElementById('compareCompany2').addEventListener('change', updateComparisonCharts);
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initRadarChart();
+        });
+    </script>
+</body>
+</html>
